@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  password         String
+  favoriteListings FavoriteListing[]
+  role             Role              @default(USER)
+}
+
+model FavoriteListing {
+  userId    Int
+  listingId Int
+  likedBy   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id(name: "favoritedId", fields: [userId, listingId])
+}
+
+model Brand {
+  id       Int       @id @default(autoincrement())
+  name     String
+  models   Model[]
+  listings Listing[]
+}
+
+model Model {
+  id       Int       @id @default(autoincrement())
+  name     String
+  brand    Brand     @relation(fields: [brandId], references: [id])
+  brandId  Int
+  listings Listing[]
+}
+
+enum BodyTypes {
+  SUV
+  OTHER
+}
+
+model Listing {
+  id           Int               @id @default(autoincrement())
+  year         Int
+  price        Int
+  mileage      Int?
+  createdAt    DateTime?
+  description  String?
+  slug         String            @unique
+  thumbnailUrl String?
+  bodyType     BodyTypes         @default(OTHER)
+  brand        Brand             @relation(fields: [brandId], references: [id])
+  model        Model             @relation(fields: [modelId], references: [id])
+  brandId      Int
+  modelId      Int
+  favorited    FavoriteListing[]
+  images       String[]
+}
